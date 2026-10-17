@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reusable Checklists</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eef2ef;--surface:#fbfdfc;--ink:#1b2a29;--muted:#66767446;--soft:#667674;
+  --line:#d3dcd8;--accent:#0f6b63;--accent-ink:#fff;--mark:#f0c64a;--danger:#b3372f;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#121b1a;--surface:#1a2625;--ink:#e6efed;--soft:#93a8a4;--line:#2e3f3d;--accent:#4cc2b6;--accent-ink:#06211e;--mark:#e0b93e;--danger:#ff8a80;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#121b1a;--surface:#1a2625;--ink:#e6efed;--soft:#93a8a4;--line:#2e3f3d;--accent:#4cc2b6;--accent-ink:#06211e;--mark:#e0b93e;--danger:#ff8a80;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 64px}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.tab{flex:none;padding:7px 14px;border:1.5px solid var(--line);border-radius:14px;font-weight:500;color:var(--soft);max-width:260px;text-align:left}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.tab.new{border-style:dashed}
+
+.title{resize:none;overflow:hidden;color:inherit;display:block;width:100%;margin:22px 0 10px;padding:0;background:none;border:0;border-bottom:2px solid transparent;font:700 32px/1.15 "Bricolage Grotesque",Figtree,system-ui,sans-serif;letter-spacing:-.01em}
+.title:hover,.title:focus{border-bottom-color:var(--line);outline:0}
+.progress{display:flex;align-items:center;gap:12px;margin-bottom:18px;color:var(--soft);font-weight:500}
+.bar{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--mark);transition:width .25s}
+.bar.full i{background:var(--accent)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:6px 10px 10px}
+ul{list-style:none;margin:0;padding:0}
+ul ul{margin-left:15px;padding-left:12px;border-left:2px solid var(--line)}
+.row{display:flex;align-items:flex-start;gap:6px;min-height:44px}
+.chk{flex:none;width:26px;height:26px;border:2px solid var(--soft);border-radius:8px;display:grid;place-items:center;margin:9px 4px}
+.chk[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+.chk[aria-checked="true"]::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.chk[aria-checked="mixed"]{border-color:var(--accent)}
+.chk[aria-checked="mixed"]::after{content:"";width:10px;height:3px;border-radius:2px;background:var(--accent)}
+.txt{flex:1;min-width:0;resize:none;overflow:hidden;display:block;line-height:1.4;padding:8px 4px;background:none;border:0;border-radius:6px}
+.txt:focus{background:var(--bg);outline:0}
+.done>.row .txt{text-decoration:line-through;color:var(--soft)}
+.ib{flex:none;margin-top:5px;width:34px;height:34px;border-radius:8px;color:var(--soft);font-size:20px;line-height:1;display:grid;place-items:center}
+.ib:hover{background:var(--bg);color:var(--ink)}
+.ib.del:hover{color:var(--danger)}
+.fold{transition:transform .15s}
+.fold[aria-expanded="false"]{transform:rotate(-90deg)}
+.spacer{flex:none;width:34px}
+.addtop{display:flex;gap:8px;margin-top:8px}
+.addtop input{flex:1;min-width:0;padding:11px 12px;border:1.5px dashed var(--line);border-radius:10px;background:none}
+.addtop input:focus{border-style:solid;border-color:var(--accent);outline:0}
+.empty{padding:18px 6px 8px;color:var(--soft)}
+
+.cats{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.cat{padding:6px 12px;border-radius:8px;border:1.5px solid var(--line);color:var(--soft);font-weight:500;font-size:14px}
+.cat[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--surface)}
+.qty{flex:none;margin-top:4px;width:56px;padding:7px 6px;text-align:center;border:1.5px solid var(--line);border-radius:8px;background:none}
+.meta{display:contents}
+.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 0 80px}
+.tools>*{margin-bottom:8px}
+.acts{display:none;gap:8px;flex-wrap:wrap}
+li.sel>.tools .acts{display:flex}
+li.sel>.row .txt{background:var(--bg)}
+.tb{width:36px;height:34px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:8px;font-size:18px;line-height:1;color:var(--soft);background:var(--surface)}
+.tb:hover{color:var(--ink);background:var(--bg)}
+.tb.del:hover{color:var(--danger)}
+.ql{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--soft)}
+.dl{flex:none;margin-top:4px;width:150px;padding:4px 6px;border:1.5px solid var(--line);border-radius:8px;background:none;font-size:12px;color:var(--soft)}
+.badge{font-size:13px;font-weight:600}
+.badge.ok{color:var(--accent)}
+.badge.bad{color:var(--danger)}
+.sum{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.sum h2{margin:0 0 10px;font:700 18px "Bricolage Grotesque",Figtree,system-ui,sans-serif}
+.sum dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:6px 16px}
+.sum dt{color:var(--soft)}
+.sum dd{margin:0;font-weight:600;text-align:right}
+.sum .total{border-top:1px solid var(--line);padding-top:8px;margin-top:4px;color:var(--ink)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.btn{padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);font-weight:600;background:var(--surface)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger);margin-left:auto}
+.btn.armed{background:var(--danger);border-color:var(--danger);color:#fff}
+.note{margin-top:22px;color:var(--soft);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <div class="cats" id="cats" role="group" aria-label="Category"><button class="cat" data-c="bring" aria-pressed="false">Things to Bring</button><button class="cat" data-c="todo" aria-pressed="false">To Do</button></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Your checklists"></div>
+  <textarea class="title" id="title" rows="1" aria-label="Checklist title" placeholder="Name this checklist"></textarea>
+  
+  <div class="progress"><div class="bar" id="bar"><i></i></div><span id="count"></span></div>
+  <div class="panel">
+    <ul id="tree"></ul>
+    <form class="addtop" id="addform"><input id="addinput" placeholder="Add an item and press Enter" aria-label="Add an item"></form>
+  </div>
+  <div class="sum" id="sum" hidden></div>
+  <div class="actions">
+    <button class="btn primary" id="clear">Clear ticks</button>
+    <button class="btn" id="copy">Duplicate</button>
+    <button class="btn danger" id="delete">Delete checklist</button>
+  </div>
+  <p class="note">Pick a category, then add checklists inside it. Tick items, then use “Clear ticks” to reuse the list. Tap an item to move it up or down, add an item below, add a sub-item, or delete it. In Things to Bring, sub-items have a quantity. In To Do, set a deadline on any item. Saved in this browser.</p>
+</main>
+<script>
+(function(){
+  var KEY="nested-checklists-v1", S, focusId=null, armTimer=null, selId=null;
+  var uid=function(){return Math.random().toString(36).slice(2,9)};
+  var it=function(t,kids){return{id:uid(),text:t,done:false,doneAt:null,qty:1,due:"",open:true,children:kids||[]}};
+
+  function seed(){
+    return {current:null,projects:[{id:uid(),title:"Weekend camping trip",category:"bring",items:[
+      it("Shelter",[it("Tent and poles"),it("Ground sheet"),it("Mallet and pegs")]),
+      it("Kitchen",[it("Stove and gas"),it("Pots and cutlery"),it("Food",[it("Breakfast"),it("Dinner"),it("Snacks")])]),
+      it("Clothes and gear",[it("Rain jacket"),it("Head torch")]),
+      it("Lock up the house")]}]};
+  }
+  function load(){
+    try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.projects&&d.projects.length)return d}}catch(e){}
+    return seed();
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+  S=load(); if(!S.current||!proj(S.current)) S.current=S.projects[0].id; S.cat=catOf(cur());
+  function catOf(p){return p.category==="bring"?"bring":"todo"}
+
+  function proj(id){return S.projects.filter(function(p){return p.id===id})[0]}
+  function cur(){return proj(S.current)}
+  function isDone(n){return n.children.length?n.children.every(isDone):n.done}
+  function anyDone(n){return n.children.length?n.children.some(anyDone):n.done}
+  function setAll(n,v){if(!v)n.doneAt=null;else if(!(n.done&&n.doneAt))n.doneAt=Date.now();n.done=v;n.children.forEach(function(c){setAll(c,v)})}
+  function leaves(list,acc){list.forEach(function(n){n.children.length?leaves(n.children,acc):acc.push(n)});return acc}
+  function find(list,id,parent){
+    for(var i=0;i<list.length;i++){
+      if(list[i].id===id)return{node:list[i],list:list,index:i};
+      var r=find(list[i].children,id);if(r)return r;
+    }
+    return null;
+  }
+  function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
+
+  function finAt(n){return n.children.length?Math.max.apply(null,n.children.map(finAt)):(n.doneAt||0)}
+  function badge(n){if(!n.due)return"";var d=new Date(n.due).getTime();if(isDone(n))return finAt(n)<=d?'<span class="badge ok">On time</span>':'<span class="badge bad">Finished late</span>';return Date.now()>d?'<span class="badge bad">Overdue</span>':""}
+  function rowHtml(n,depth){var cat=catOf(cur());var meta=cat==="todo"?badge(n):"";var dlIn=cat==="todo"?'<input class="dl" type="datetime-local" value="'+esc(n.due||"")+'" aria-label="Deadline">':"";
+    var d=isDone(n),state=d?"true":(n.children.length&&anyDone(n)?"mixed":"false");
+    var kids=n.children.length;
+    var fold=kids?'<button class="ib fold" data-a="fold" aria-label="Collapse or expand" aria-expanded="'+(n.open!==false)+'">▾</button>':'<span class="spacer"></span>';
+    return '<li data-id="'+n.id+'" class="'+(d?"done":"")+(n.id===selId?" sel":"")+'"><div class="row">'+fold+
+      '<button class="chk" data-a="tick" role="checkbox" aria-checked="'+state+'" aria-label="Tick item"></button>'+
+      '<textarea class="txt" rows="1" aria-label="Item text" placeholder="New item">'+esc(n.text)+'</textarea>'+dlIn+(cat==="bring"&&!kids&&depth>0?'<input class="qty" type="number" min="1" inputmode="numeric" value="'+(n.qty||1)+'" aria-label="Quantity">':'')+'</div>'+
+      '<div class="tools">'+meta+'<span class="acts"><button class="tb" data-a="up" aria-label="Move up" title="Move up">↑</button><button class="tb" data-a="down" aria-label="Move down" title="Move down">↓</button><button class="tb" data-a="next" aria-label="Add item below" title="Add item below">+</button><button class="tb" data-a="sub" aria-label="Add sub-item" title="Add sub-item">↳</button>'+
+      '<button class="tb del" data-a="del" aria-label="Delete" title="Delete">×</button></span></div>'+
+      (kids&&n.open!==false?'<ul>'+n.children.map(function(x){return rowHtml(x,depth+1)}).join("")+'</ul>':'')+'</li>';
+  }
+
+  function renderSum(p,all){
+    var el=document.getElementById("sum"),cat=catOf(p),h="";
+    if(cat==="bring"){
+      var m={},order=[],total=0;
+      all.forEach(function(n){var t=n.text.trim();if(!t)return;var k=t.toLowerCase(),q=Math.max(1,parseInt(n.qty)||1);if(!m[k]){m[k]={name:t,q:0};order.push(k)}m[k].q+=q;total+=q});
+      if(order.length)h='<h2>Packing summary</h2><dl>'+order.map(function(k){return '<dt>'+esc(m[k].name)+'</dt><dd>×'+m[k].q+'</dd>'}).join("")+'<dt class="total">Total items</dt><dd class="total">'+total+' ('+order.length+' kinds)</dd></dl>';
+    }else if(cat==="todo"){
+      var due=[],now=Date.now();
+      (function walk(l){l.forEach(function(n){if(n.due)due.push(n);walk(n.children)})})(p.items);
+      var fin=due.filter(isDone),ok=fin.filter(function(n){return finAt(n)<=new Date(n.due).getTime()}).length;
+      var over=due.filter(function(n){return !isDone(n)&&new Date(n.due).getTime()<now}).length;
+      var pct=all.length?Math.round(all.filter(function(n){return n.done}).length/all.length*100):0;
+      h='<h2>Progress summary</h2><dl><dt>Completed</dt><dd>'+pct+'%</dd><dt>Items with a deadline</dt><dd>'+due.length+'</dd><dt>Finished within deadline</dt><dd>'+(fin.length?ok+' of '+fin.length+' ('+Math.round(ok/fin.length*100)+'%)':'–')+'</dd><dt>Finished late</dt><dd>'+(fin.length-ok)+'</dd><dt>Overdue, not done</dt><dd>'+over+'</dd></dl>';
+    }
+    el.innerHTML=h;el.hidden=!h;
+  }
+  function grow(el){el.style.height="auto";el.style.height=el.scrollHeight+"px"}
+  function growAll(){Array.prototype.forEach.call(document.querySelectorAll(".txt,.title"),grow)}
+  window.addEventListener("resize",growAll);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(growAll);
+  function render(){
+    var p=cur();
+    var tabs=document.getElementById("tabs");
+    tabs.innerHTML=S.projects.filter(function(x){return catOf(x)===S.cat}).map(function(x){
+      return '<button class="tab" role="tab" data-p="'+x.id+'" aria-selected="'+(x.id===S.current)+'">'+esc(x.title||"Untitled")+'</button>';
+    }).join("")+'<button class="tab new" data-p="new">+ New checklist</button>';
+    var t=document.getElementById("title"); if(document.activeElement!==t)t.value=p.title;
+    var tree=document.getElementById("tree");
+    tree.innerHTML=p.items.length?p.items.map(function(x){return rowHtml(x,0)}).join(""):'<li class="empty">Nothing here yet. Add your first item below.</li>';
+    var all=leaves(p.items,[]),done=all.filter(function(n){return n.done}).length;
+    document.getElementById("count").textContent=(all.length?Math.round(done/all.length*100):0)+"% · "+done+" of "+all.length+" done";
+    renderSum(p,all);
+    Array.prototype.forEach.call(document.querySelectorAll(".cat"),function(b){b.setAttribute("aria-pressed",String(b.dataset.c===S.cat))});
+    var bar=document.getElementById("bar");
+    bar.firstElementChild.style.width=(all.length?done/all.length*100:0)+"%";
+    bar.className="bar"+(all.length&&done===all.length?" full":"");
+    growAll();if(focusId){var el=tree.querySelector('[data-id="'+focusId+'"] .txt');if(el)el.focus();focusId=null}
+  }
+  function commit(){save();render()}
+
+  document.getElementById("tabs").addEventListener("click",function(e){
+    var b=e.target.closest("[data-p]");if(!b)return;
+    if(b.dataset.p==="new"){var np={id:uid(),title:"",category:S.cat,items:[]};S.projects.push(np);S.current=np.id;commit();document.getElementById("title").focus();return}
+    S.current=b.dataset.p;commit();
+  });
+  document.getElementById("title").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();e.target.blur()}});
+  document.getElementById("cats").addEventListener("click",function(e){var b=e.target.closest("[data-c]");if(!b)return;S.cat=b.dataset.c;var f=S.projects.filter(function(p){return catOf(p)===S.cat})[0];if(!f){f={id:uid(),title:"",category:S.cat,items:[]};S.projects.push(f)}S.current=f.id;commit()});
+  document.getElementById("title").addEventListener("input",function(e){cur().title=e.target.value;grow(e.target);save();
+    var s=document.querySelector('.tab[aria-selected="true"]');if(s)s.textContent=e.target.value||"Untitled"});
+
+  var tree=document.getElementById("tree");
+  tree.addEventListener("click",function(e){
+    var b=e.target.closest("[data-a]");if(!b)return;
+    var id=b.closest("li").dataset.id,r=find(cur().items,id),n=r.node,a=b.dataset.a;
+    if(a==="tick"){setAll(n,!isDone(n))}
+    else if(a==="fold"){n.open=n.open===false}
+    else if(a==="del"){r.list.splice(r.index,1)}
+    else if(a==="up"||a==="down"){var j=r.index+(a==="up"?-1:1);if(j<0||j>=r.list.length)return;var sw=r.list[j];r.list[j]=n;r.list[r.index]=sw;selId=n.id}
+    else if(a==="next"){var nx=it("");r.list.splice(r.index+1,0,nx);focusId=nx.id}
+    else if(a==="sub"){var c=it("");n.children.push(c);n.open=true;n.done=false;focusId=c.id}
+    commit();
+  });
+  tree.addEventListener("change",function(e){
+    if(!e.target.classList.contains("txt"))return;
+    var r=find(cur().items,e.target.closest("li").dataset.id);
+    if(!e.target.value.trim()){r.list.splice(r.index,1)}else{r.node.text=e.target.value.trim();save();renderSum(cur(),leaves(cur().items,[]));return}
+    commit();
+  });
+  tree.addEventListener("change",function(e){
+    var c=e.target.classList;if(!c.contains("qty")&&!c.contains("dl"))return;
+    var n=find(cur().items,e.target.closest("li").dataset.id).node;
+    if(c.contains("qty")){n.qty=Math.max(1,parseInt(e.target.value)||1);save();renderSum(cur(),leaves(cur().items,[]));return}n.due=e.target.value;
+    commit();
+  });
+  tree.addEventListener("focusin",function(e){var li=e.target.closest("li");if(!li||li.dataset.id===selId)return;selId=li.dataset.id;Array.prototype.forEach.call(tree.querySelectorAll("li.sel"),function(x){x.classList.remove("sel")});li.classList.add("sel")});
+  tree.addEventListener("input",function(e){if(e.target.classList.contains("txt"))grow(e.target)});
+  tree.addEventListener("keydown",function(e){
+    if(e.key!=="Enter"||!e.target.classList.contains("qty"))return;
+    e.preventDefault();
+    var r=find(cur().items,e.target.closest("li").dataset.id);
+    r.node.qty=Math.max(1,parseInt(e.target.value)||1);
+    var c=it("");r.list.splice(r.index+1,0,c);focusId=c.id;commit();
+  });
+  tree.addEventListener("keydown",function(e){
+    if(e.key!=="Enter"||e.shiftKey||!e.target.classList.contains("txt"))return;
+    e.preventDefault();
+    var r=find(cur().items,e.target.closest("li").dataset.id);
+    r.node.text=e.target.value.trim()||r.node.text;
+    if(!r.node.text){return}
+    var c=it("");r.list.splice(r.index+1,0,c);focusId=c.id;commit();
+  });
+
+  document.getElementById("addform").addEventListener("submit",function(e){
+    e.preventDefault();var i=document.getElementById("addinput"),v=i.value.trim();if(!v)return;
+    var c=it(v),m=v.match(/^(\d+)\s*[x×]?\s+(.+)$/);
+    
+    cur().items.push(c);i.value="";commit();i.focus();
+  });
+
+  document.getElementById("clear").addEventListener("click",function(){
+    cur().items.forEach(function(n){setAll(n,false)});commit();
+  });
+  document.getElementById("copy").addEventListener("click",function(){
+    var p=cur();function cl(n){return{id:uid(),text:n.text,done:false,doneAt:null,qty:n.qty||1,due:n.due||"",open:n.open,children:n.children.map(cl)}}
+    var np={id:uid(),title:(p.title||"Untitled")+" copy",category:p.category,items:p.items.map(cl)};
+    S.projects.push(np);S.current=np.id;commit();
+  });
+  var del=document.getElementById("delete");
+  del.addEventListener("click",function(){
+    if(del.className.indexOf("armed")<0){
+      del.classList.add("armed");del.textContent="Tap again to delete";
+      clearTimeout(armTimer);armTimer=setTimeout(reset,3000);return;
+    }
+    reset();
+    var gc=catOf(cur());S.projects=S.projects.filter(function(p){return p.id!==S.current});
+    if(!S.projects.some(function(p){return catOf(p)===gc}))S.projects.push({id:uid(),title:"",category:gc,items:[]});
+    S.current=S.projects.filter(function(p){return catOf(p)===gc})[0].id;S.cat=gc;commit();
+  });
+  function reset(){clearTimeout(armTimer);del.classList.remove("armed");del.textContent="Delete checklist"}
+
+  render();
+})();
+</script>
+</body>
+</html>
